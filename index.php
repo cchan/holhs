@@ -11,6 +11,8 @@ body>header h1{
 	padding:20px 40px;
 	margin:0;
 	display:inline-block;
+	min-width: 3.5em;
+	width: 40%;
 }
 #arrow{
 	display:inline-block;
@@ -57,8 +59,9 @@ section h2{
 </header>
 
 <?php
-if(file_exists("images.json"))
-	$IMAGE_DATA=json_decode(file_get_contents("images.json"),true);
+require "secrets.php";
+if(file_exists($jsonfile))
+	$IMAGE_DATA=json_decode(file_get_contents($jsonfile),true);
 else
 	echo "<center>[no images! an error occurred]</center>";
 
