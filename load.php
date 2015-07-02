@@ -58,7 +58,7 @@ foreach($page_posts['data'] as $post){
 	];
 	
 	//Download the photo
-	if(file_exists("img/{$post['object_id']}.jpg")){
+	if(file_exists("{$imgdir}/{$post['object_id']}.jpg")){
 		echo "[".(++$i)."] Image {$post['object_id']} already exists, skipping.<br>";
 		ob_flush();flush();
 	}
@@ -66,8 +66,8 @@ foreach($page_posts['data'] as $post){
 		echo "[".(++$i)."] copying image {$post['object_id']}...";
 		ob_flush();flush();
 		
-		if(@!copy("https://graph.facebook.com/{$post['object_id']}/picture","img/{$post['object_id']}.jpg"))
-			echo " Unexpected error. Just download it manually from <a href='https://graph.facebook.com/{$post['object_id']}/picture'>https://graph.facebook.com/{$post['object_id']}/picture</a> to img/{$post['object_id']}.jpg.";
+		if(@!copy("https://graph.facebook.com/{$post['object_id']}/picture","{$imgdir}/{$post['object_id']}.jpg"))
+	echo " Unexpected error. Just download it manually from <a href='https://graph.facebook.com/{$post['object_id']}/picture'>https://graph.facebook.com/{$post['object_id']}/picture</a> to {$imgdir}/{$post['object_id']}.jpg.";
 		else
 			echo " Done!";
 		
