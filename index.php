@@ -43,12 +43,17 @@ blockquote:before {
 
 section{
 	border:solid 1px #000;
-	margin: -25px 100px 50px 100px;
 	padding: 30px;
+	display:inline-block;
+	width: 30%;
+	overflow: hidden;
+	vertical-align: top;
+	background-size: 100% auto;
 }
 section h2{
 	margin: 0px;
 }
+
 </style>
 
 <header>
@@ -74,13 +79,10 @@ foreach($IMAGE_DATA as $post){
 	$picurl = "img/{$post['object_id']}.jpg";
 	$msg = nl2br($post['message']);
 	echo <<<HEREDOC
-<section>
+<section style="background-image:url('{$picurl}')">
 	<header>
 		<h2>{$date}</h2>
 	</header>
-	<div>
-		<img src='{$picurl}' alt='HoLHS Photo {$date}' />
-	</div>
 	<blockquote>
 		{$msg}
 	</blockquote>

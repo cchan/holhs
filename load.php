@@ -18,8 +18,17 @@ if(file_exists($jsonfile)){ //If $time_to_wait seconds have not yet elapsed, don
 }
 
 echo "Trying to connect to FB... ";ob_flush();flush();
-$page_posts = json_decode(file_get_contents("https://graph.facebook.com/humansoflhs/posts?limit={$max_to_retrieve}&access_token=".$access_token), true);
+$page_posts = json_decode(file_get_contents("https://graph.facebook.com/humansoflhs/posts?access_token=".$access_token), true);
 if(@$page_posts["error"]){var_dump($page_posts["error"]);die();}
+
+while(@$page_posts["paging"]["next"]){
+echo "Retrieved: ".count($page_posts['data'])." posts [\$max_to_retrieve = {$max_to_retrieve}]<br>";
+	$nextpage = $page_posts["paging"]["next"];
+	$nextpagedata = json_decode(file_get_contents($nextpage), true);
+	if(!$nextpagedata)break;
+	unset($page_posts["paging"]);
+	$page_posts = array_merge($page_posts,$nextpagedata);
+}
 
 echo "Retrieved: ".count($page_posts['data'])." posts [\$max_to_retrieve = {$max_to_retrieve}]<br>";
 echo "(If it times out, just reload and it'll keep working from where it started).<br>";
