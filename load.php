@@ -17,29 +17,34 @@ if(file_exists($jsonfile)){ //If $time_to_wait seconds have not yet elapsed, don
 	}
 }
 
+
+$postsdata = [];
+
 echo "Trying to connect to FB... ";ob_flush();flush();
 $page_posts = json_decode(file_get_contents("https://graph.facebook.com/humansoflhs/posts?access_token=".$access_token), true);
 if(@$page_posts["error"]){var_dump($page_posts["error"]);die();}
 
-while(@$page_posts["paging"]["next"]){
-echo "Retrieved: ".count($page_posts['data'])." posts [\$max_to_retrieve = {$max_to_retrieve}]<br>";
+while($page_posts && @$page_posts["paging"]["next"]){
+	$postsdata = array_merge($postsdata,$page_posts['data']);
+	echo "Retrieved: ".count($page_posts['data'])." posts [\$max_to_retrieve = {$max_to_retrieve}]<br>";
+	
 	$nextpage = $page_posts["paging"]["next"];
-	$nextpagedata = json_decode(file_get_contents($nextpage), true);
-	if(!$nextpagedata)break;
-	unset($page_posts["paging"]);
-	$page_posts = array_merge($page_posts,$nextpagedata);
+	$page_posts = json_decode(file_get_contents($nextpage), true);
 }
 
-echo "Retrieved: ".count($page_posts['data'])." posts [\$max_to_retrieve = {$max_to_retrieve}]<br>";
+echo "TOTAL Retrieved: ".count($postsdata)." posts [\$max_to_retrieve = {$max_to_retrieve}]<br>";
 echo "(If it times out, just reload and it'll keep working from where it started).<br>";
 
 
 //Insert all images into JSON, and retrieve the image files if necessary
 $IMAGE_DATA = [];
+$ERRORS = [];
 $i = 0;
-foreach($page_posts['data'] as $post){
+foreach($postsdata as $post){
+	$i++;
 	if($post['type'] != "photo"){ //(has no object_id)
-		echo "[".(++$i)."] Is not a photo. Skipping.";
+		echo "[".$i."] Is not a photo. Skipping.";
+		$ERRORS[$i] = "Not a photo.";
 		if(@$post['message']){
 			if(strlen($post['message'])<=100)echo " [message: ".$post['message']."]";
 			else echo " [message: ".substr($post['message'],0,100)."...]";
@@ -68,15 +73,17 @@ foreach($page_posts['data'] as $post){
 	
 	//Download the photo
 	if(file_exists("{$imgdir}/{$post['object_id']}.jpg")){
-		echo "[".(++$i)."] Image {$post['object_id']} already exists, skipping.<br>";
+		echo "<b style='color:green'>[".$i."]</b> Image {$post['object_id']} already exists, skipping.<br>";
 		ob_flush();flush();
 	}
 	else{
-		echo "[".(++$i)."] copying image {$post['object_id']}...";
+		echo "<b style='color:red'>[".$i."]</b> copying image {$post['object_id']}...";
 		ob_flush();flush();
 		
-		if(@!copy("https://graph.facebook.com/{$post['object_id']}/picture","{$imgdir}/{$post['object_id']}.jpg"))
-	echo " Unexpected error. Just download it manually from <a href='https://graph.facebook.com/{$post['object_id']}/picture'>https://graph.facebook.com/{$post['object_id']}/picture</a> to {$imgdir}/{$post['object_id']}.jpg.";
+		if(@!copy("https://graph.facebook.com/{$post['object_id']}/picture","{$imgdir}/{$post['object_id']}.jpg")){
+			echo " Unexpected error. Just download it manually from <a href='https://graph.facebook.com/{$post['object_id']}/picture'>https://graph.facebook.com/{$post['object_id']}/picture</a> to {$imgdir}/{$post['object_id']}.jpg.";
+			$ERRORS[$i] = "Need to download";
+		}
 		else
 			echo " Done!";
 		
@@ -85,6 +92,7 @@ foreach($page_posts['data'] as $post){
 	}
 }
 
+echo "<pre>ALL ERRORS: ".var_export($ERRORS,true)."</pre>";
 usort($IMAGE_DATA,function($a,$b){return ($a["time"]>$b["time"])?-1:1;}); //Sort them in reverse chronological order
 $IMAGE_DATA["lastUpdated"] = time();//Add the lastUpdated field
 file_put_contents($jsonfile, json_encode($IMAGE_DATA, JSON_PRETTY_PRINT), LOCK_EX); //and write the JSON data
